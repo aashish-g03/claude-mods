@@ -124,6 +124,59 @@ async function resume($: EngineInterface) {
   }
 }
 
+// Where a handoff's files go, kept while Claude writes the brief as a turn.
+type Draft = { dir: string; briefPath: string; transcriptPath: string; at: number }
+const draftKey = (cwd: string) => `draft:${cwd}`
+
+// Shared by /handoff and the band's buttons. A button can't run /handoff through
+// $.command.run: that call skips the calling plugin's own hooks.
+async function startHandoff($: EngineInterface) {
+  await update($, band, (b): Band => ({ ...b, phase: 'working' }))
+  try {
+    return await writeHandoff($)
+  } catch (error) {
+    const note = `failed: ${error instanceof Error ? error.message : String(error)}`
+    await update($, band, (): Band => ({ phase: 'failed', note }))
+
+    return { text: `Handoff ${note}` }
+  }
+}
+
+async function skipHandoff($: EngineInterface) {
+  const cwd = await $.session.cwd()
+  const ptr = (await $.store.get(pointerKey(cwd))) as Pointer | undefined
+  if (!ptr) {
+    return { text: 'No saved handoff for this folder.' }
+  }
+  await $.store.set(pointerKey(cwd), { ...ptr, resumedBy: 'skipped' })
+  await update($, band, (): Band => ({ phase: 'hidden' }))
+
+  return { text: 'Saved handoff will not load. It stays on disk at ' + ptr.dir }
+}
+
+// Adds the transcript line, records the pointer the next session reads, and shows Saved.
+async function saveBrief($: EngineInterface, draft: Draft, text: string) {
+  const brief = `${text.trim()}\n\n---\nFull transcript of the earlier session: ${draft.transcriptPath}\n`
+  await $.fs.write(draft.briefPath, brief)
+  const pending = countPending(brief)
+  const ptr: Pointer = { ...draft, pending, sessionId: await $.session.id() }
+  await $.store.set(pointerKey(await $.session.cwd()), ptr)
+  await update($, band, (): Band => ({ phase: 'done', at: draft.at, pending }))
+  $.ui.toast(`Handoff saved · ${pending} pending`)
+
+  return { text: `Handoff saved to ${draft.dir}\nRun /clear (or open a new session here) and it resumes by itself.` }
+}
+
+async function submitBriefTurn($: EngineInterface, text: string) {
+  try {
+    await $.prompt.submit({ text })
+  } catch (error) {
+    await $.store.delete(draftKey(await $.session.cwd()))
+    const reason = error instanceof Error ? error.message : String(error)
+    await update($, band, (): Band => ({ phase: 'failed', note: `could not ask Claude for the brief (${reason})` }))
+  }
+}
+
 // Saves the transcript first, then the brief, then the pointer the next session reads.
 async function writeHandoff($: EngineInterface) {
   const cwd = await $.session.cwd()
@@ -137,23 +190,27 @@ async function writeHandoff($: EngineInterface) {
   const messages = await $.session.messages()
   await $.fs.write(transcriptPath, `# Transcript: ${cwd}\n\n_Saved ${when(at)}_\n\n${toMarkdown(messages)}\n`)
 
+  const draft: Draft = { dir, briefPath, transcriptPath, at }
   const fork = await $.model.fork({ prompt: BRIEF_PROMPT })
-  if (!fork.isAnswered) {
-    const note = `brief failed (${fork.reason}); transcript saved`
-    await update($, band, (): Band => ({ phase: 'failed', note }))
-
-    return { text: `Handoff ${note}: ${transcriptPath}` }
+  if (fork.isAnswered) {
+    return saveBrief($, draft, fork.text)
   }
+  if (fork.reason === 'nothing-to-fork') {
+    // A resumed or just-started session has no snapshot to fork until a turn
+    // ends, so the conversation itself writes the brief; turn.complete saves it.
+    await $.store.set(draftKey(cwd), draft)
+    // A command (or a press) can't submit a prompt itself: the new turn would wait
+    // on the dispatch that's still running. A timer submits it right after.
+    const text = `${BRIEF_PROMPT}\n\nWrite the brief with the Write tool to exactly this file: ${briefPath}\nThen reply with one line: Brief written.`
+    $.clock.after(0, () => void submitBriefTurn($, text))
+    await update($, band, (): Band => ({ phase: 'working', note: 'Claude is writing the brief' }))
 
-  const brief = `${fork.text.trim()}\n\n---\nFull transcript of the earlier session: ${transcriptPath}\n`
-  await $.fs.write(briefPath, brief)
-  const pending = countPending(brief)
-  const ptr: Pointer = { dir, briefPath, transcriptPath, at, pending, sessionId: await $.session.id() }
-  await $.store.set(pointerKey(cwd), ptr)
-  await update($, band, (): Band => ({ phase: 'done', at, pending }))
-  $.ui.toast(`Handoff saved · ${pending} pending`)
+    return { text: `No snapshot to fork yet, so Claude is writing the brief as a turn. Transcript saved: ${transcriptPath}` }
+  }
+  const note = `brief failed (${fork.reason}); transcript saved`
+  await update($, band, (): Band => ({ phase: 'failed', note }))
 
-  return { text: `Handoff saved to ${dir}\nRun /clear (or open a new session here) and it resumes by itself.` }
+  return { text: `Handoff ${note}: ${transcriptPath}` }
 }
 
 export const register: Register = on => {
@@ -206,29 +263,30 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'handoff' }, async $ => {
-    await update($, band, (b): Band => ({ ...b, phase: 'working' }))
-    try {
-      return await writeHandoff($)
-    } catch (error) {
-      const note = `failed: ${error instanceof Error ? error.message : String(error)}`
-      await update($, band, (): Band => ({ phase: 'failed', note }))
+  on('command.run', { command: 'handoff' }, async $ => startHandoff($))
 
-      return { text: `Handoff ${note}` }
+  on('command.run', { command: 'handoff-skip' }, async $ => skipHandoff($))
+
+  // Finishes a handoff whose brief the conversation wrote as a turn.
+  on('turn.complete', async ($, e, next) => {
+    const result = await next(e)
+    if (e.agentId !== undefined) {
+      return result
     }
-  })
-
-
-  on('command.run', { command: 'handoff-skip' }, async $ => {
     const cwd = await $.session.cwd()
-    const ptr = (await $.store.get(pointerKey(cwd))) as Pointer | undefined
-    if (!ptr) {
-      return { text: 'No saved handoff for this folder.' }
+    const draft = (await $.store.get(draftKey(cwd))) as Draft | undefined
+    if (!draft) {
+      return result
     }
-    await $.store.set(pointerKey(cwd), { ...ptr, resumedBy: 'skipped' })
-    await update($, band, (): Band => ({ phase: 'hidden' }))
+    await $.store.delete(draftKey(cwd))
+    const text = await $.fs.read(draft.briefPath).catch(() => undefined)
+    if (text === undefined) {
+      await update($, band, (): Band => ({ phase: 'failed', note: 'Claude did not write the brief; transcript saved' }))
+    } else {
+      await saveBrief($, draft, text)
+    }
 
-    return { text: 'Saved handoff will not load. It stays on disk at ' + ptr.dir }
+    return result
   })
 
   on('session.end', async ($, e, next) => {
@@ -256,6 +314,8 @@ export const register: Register = on => {
     }
     const { Box, Button, Text } = $.ui.resolve(e)
     const hide = () => update($, band, (): Band => ({ phase: 'hidden', dismissedAt: b.percent }))
+    // Only for other plugins' and built-in commands: a plugin's own command run
+    // this way skips its own hooks, so Handoff and Skip call their functions.
     const run = (command: string, fallback: string) => () =>
       void $.command.run({ command }).catch(() => $.ui.toast(fallback))
     const since = b.at === undefined ? '' : ` · ${when(b.at)}`
@@ -266,17 +326,17 @@ export const register: Register = on => {
         return (
           <Box gap={1}>
             <Text color="warning">Context {b.percent}%</Text>
-            <Button key="handoff" label="Handoff" variant="primary" onPress={run('handoff', 'Could not start: type /handoff')} />
+            <Button key="handoff" label="Handoff" variant="primary" onPress={() => void startHandoff($)} />
             <Button key="later" label="Later" role="dismiss" onPress={hide} />
           </Box>
         )
       case 'working':
-        return <Text dimColor>Writing handoff…</Text>
+        return <Text dimColor>{b.note ?? 'Writing handoff'}…</Text>
       case 'failed':
         return (
           <Box gap={1}>
             <Text color="error">Handoff: {b.note}</Text>
-            <Button key="retry" label="Retry" onPress={run('handoff', 'Could not start: type /handoff')} />
+            <Button key="retry" label="Retry" onPress={() => void startHandoff($)} />
           </Box>
         )
       case 'done':
@@ -291,7 +351,7 @@ export const register: Register = on => {
         return (
           <Box gap={1}>
             <Text dimColor>Resuming from handoff{since}{pending}…</Text>
-            <Button key="skip" label="Skip" role="dismiss" onPress={run('handoff-skip', 'Could not skip: type /handoff-skip')} />
+            <Button key="skip" label="Skip" role="dismiss" onPress={() => void skipHandoff($)} />
           </Box>
         )
       case 'stale':
@@ -299,7 +359,7 @@ export const register: Register = on => {
           <Box gap={1}>
             <Text dimColor>Older handoff{since}{pending}</Text>
             <Button key="load" label="Load" onPress={() => void resume($)} />
-            <Button key="skip" label="Skip" role="dismiss" onPress={run('handoff-skip', 'Could not skip: type /handoff-skip')} />
+            <Button key="skip" label="Skip" role="dismiss" onPress={() => void skipHandoff($)} />
           </Box>
         )
       case 'resumed':

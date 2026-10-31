@@ -1,7 +1,7 @@
 {
   "name": "handoff",
   "displayName": "Handoff",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "At 70% context, one button saves a structured brief and the full transcript, and the next session resumes from it by itself",
   "author": {
     "name": "aashish-g03",

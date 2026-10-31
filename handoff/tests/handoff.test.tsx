@@ -37,6 +37,8 @@ const engine = (on: On, sessionId: string, store: Map<string, unknown>, files: M
   on('env.get', () => ({ value: '/Users/me' }))
   on('store.get', (_, e) => ({ value: store.get(e.key) }))
   on('store.set', (_, e) => (store.set(e.key, e.value), { value: undefined }))
+  on('store.delete', (_, e) => (store.delete(e.key), { value: undefined }))
+  on('turn.complete', (_, e) => ({ text: e.answer ?? '' }))
   on('fs.read', (_, e) => ({ value: files.get(e.path) ?? '' }))
   if (!own.includes('fs.write')) {
     on('fs.write', (_, e) => (files.set(e.path, e.text), { value: undefined }))
@@ -232,4 +234,46 @@ test('a write that throws leaves Retry, not a stuck band', async ($, on) => {
   const ui = await $.ui.mount(BAND)
   expect(await ui.find({ type: 'Button', key: 'retry' })).toBeDefined()
   await ui.unmount()
+})
+
+// The bug seen live: the button ran /handoff through $.command.run, which skips
+// the calling plugin's own hooks, so nothing answered it.
+test('pressing the Handoff button writes a handoff', async ($, on) => {
+  const files = new Map<string, string>()
+  engine(on, 's1', new Map(), files)
+  on('command.run', () => ({ text: 'no hook answered' }))
+  on('session.messages', (): { value: SessionMessage[] } => ({ value: [{ role: 'user', text: 'hello', toolUses: [] }] }))
+  on('model.fork', () => ({ value: { isAnswered: true, text: '# Handoff brief\n- [ ] one', usage: USAGE } }))
+  await $.session.measure(measure(72))
+
+  const ui = await $.ui.mount(BAND)
+  await ui.press({ key: 'handoff' })
+  await ui.unmount()
+
+  expect([...files.keys()].some(p => p.endsWith('brief.md'))).toBe(true)
+})
+
+// A resumed session has nothing to fork until a turn ends: the conversation
+// writes the brief as a turn instead, and the end of that turn saves it.
+test('with nothing to fork, Claude writes the brief as a turn and it is saved', async ($, on) => {
+  const store = new Map<string, unknown>()
+  const files = new Map<string, string>()
+  const prompts = engine(on, 's1', store, files, ['clock'])
+  const clock = mock.clock(on, { now: NOW })
+  on('session.messages', (): { value: SessionMessage[] } => ({ value: [{ role: 'user', text: 'hello', toolUses: [] }] }))
+  on('model.fork', () => ({ value: { isAnswered: false, reason: 'nothing-to-fork' } }))
+
+  await $.command.run({ ...RUN, command: 'handoff' })
+  await clock.advance(10)
+  const asked = prompts.find(p => p.includes('Write the brief with the Write tool'))
+  const briefPath = asked?.match(/exactly this file: (\S+)/)?.[1]
+  expect(briefPath).toBeDefined()
+  expect(store.has(KEY)).toBe(false)
+
+  // The turn writes the file, then ends.
+  files.set(briefPath!, '# Handoff brief\n- [ ] one\n- [ ] two')
+  await $.turn.complete({ answer: 'Brief written.', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+
+  expect(store.get(KEY)).toEqual(expect.objectContaining({ pending: 2, sessionId: 's1' }))
+  expect(files.get(briefPath!)).toContain('Full transcript of the earlier session')
 })
