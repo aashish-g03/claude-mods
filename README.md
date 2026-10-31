@@ -227,4 +227,4 @@ Tested on Claude Code 2.1.316 in a macOS terminal.
 
 ## Articles
 
-[`articles/`](articles) holds posts about these mods. A GitHub Action publishes them to dev.to: each push creates the article once, then updates it in place. Its dev.to id is kept in `articles/.devto.json`. Edit articles here, not on dev.to, because the next push overwrites dev.to-side edits. To go live, set `published: true` in the article's front matter and push. Leaving it `false` would turn a live article back into a draft.
+[`articles/`](articles) holds posts about these mods, written as Markdown with dev.to front matter. They're published from a local machine with a personal Claude Code skill, not from this repo. Each article's dev.to id is kept in `articles/.devto.json` so republishing updates it in place.
