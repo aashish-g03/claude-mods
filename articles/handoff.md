@@ -10,7 +10,7 @@ cover_image: ../assets/devto-cover.png
 >
 > [Code](https://github.com/aashish-g03/claude-mods) | [Install](#try-it) | Built on Claude Code mods (early access)
 
-![The handoff band: the context reaches 72% and a Handoff button appears; after pressing it the band reads Handoff saved, 8 pending; /clear runs; the next conversation is sent a resume prompt automatically and Claude reports where things stand](../assets/handoff-demo.gif)
+![The handoff band: the context reaches 72% and a Handoff button appears; after pressing it the band reads Handoff saved, 8 pending; /clear runs; the next conversation is sent a resume prompt automatically and Claude reports where things stand](../assets/handoff-article/demo-v2.gif)
 
 ---
 
@@ -18,7 +18,7 @@ cover_image: ../assets/devto-cover.png
 
 Every time a Claude Code conversation hit 75–80% of its context, I did the same five things:
 
-![The old ritual in five steps: notice the context is at 78%, run /export, open a new session that knows nothing, paste a long "continue from where I left off, answer every question, tell me what's pending" prompt, then wait while it reads a 300 KB export and guesses which parts mattered](../assets/handoff-article/ritual.gif)
+![The old ritual in five steps: notice the context is at 78%, run /export, open a new session that knows nothing, paste a long "continue from where I left off, answer every question, tell me what's pending" prompt, then wait while it reads a 300 KB export and guesses which parts mattered](../assets/handoff-article/ritual-v2.gif)
 
 The prompt I pasted was always some version of:
 
@@ -39,7 +39,7 @@ A band that sits above the prompt and walks through the handoff:
 
 The brief is the point. Claude writes it over the conversation it's leaving, so it knows what was decided, what was rejected and what I corrected along the way:
 
-![A brief.md filling in section by section: Task in progress, Questions raised and their status (one OPEN, one answered), Pending checklist, Decisions, Gotchas, and Skills and memories. Beside it, a bar shrinks from the 212 KB transcript to the 16 KB brief, about 4,000 tokens](../assets/handoff-article/brief-filling.gif)
+![A brief.md filling in section by section: Task in progress, Questions raised and their status (one OPEN, one answered), Pending checklist, Decisions, Gotchas, and Skills and memories. Beside it, a bar shrinks from the 212 KB transcript to the 16 KB brief, about 4,000 tokens](../assets/handoff-article/brief-v2.gif)
 
 On the run that worked end to end, the new session read the brief, listed the open questions and all 7 pending items correctly, and waited for me before touching anything. The full transcript stays on disk next to the brief, for the rare detail the brief leaves out.
 
@@ -73,7 +73,7 @@ The first version passed its tests and then failed in real use four different wa
 
 The button is meant to come up before auto-compact runs. I worked out the auto-compact point over the *compaction* window, but the fill Claude Code reports is over the *model's* window. When those differ, it breaks:
 
-![Two context bars on a 1M-token model with a 200k compaction window. First version: auto-compact really happens at 16%, but the button waits at 70%, so the conversation is compacted and no button ever appears. Fixed: the button appears at 11%, five points before compaction at 16%](../assets/handoff-article/threshold.gif)
+![Two context bars on a 1M-token model with a 200k compaction window. First version: auto-compact really happens at 16%, but the button waits at 70%, so the conversation is compacted and no button ever appears. Fixed: the button appears at 11%, five points before compaction at 16%](../assets/handoff-article/threshold-v2.gif)
 
 The fix was one denominator. The test for it uses exactly that setup.
 
@@ -91,7 +91,7 @@ A security plugin loaded ahead of mine sends prompt-shaping events past personal
 
 Next I added the brief as a hidden note at the start of the turn. The band said **Resumed**, so I asked "what's pending?", and Claude answered about a completely different branch. The session log showed why:
 
-![Two timelines. Hidden note: you send "what's pending?" at 0 ms, the request goes to the model at 0 ms, the brief is stored at +45 ms and misses the request, and Claude answers about a different branch. Fix: /clear at 0 s, the mod sends a resume prompt at +0.6 s, Claude reads brief.md, lists 7 pending items and waits](../assets/handoff-article/race.png)
+![Two timelines. Hidden note: you send "what's pending?" at 0 ms, the request goes to the model at 0 ms, the brief is stored at +45 ms and misses the request, and Claude answers about a different branch. Fix: /clear at 0 s, the mod sends a resume prompt at +0.6 s, Claude reads brief.md, lists 7 pending items and waits](../assets/handoff-article/race-v2.png)
 
 ### 4. The fix was the simplest version
 

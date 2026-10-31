@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <defs>
+    <style>
+      .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 18px; }
+      .s { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .fg { fill: #e6edf3; } .dim { fill: #8b949e; } .warn { fill: #e3b341; } .ok { fill: #3fb950; } .acc { fill: #f0a46f; }
+      .f { opacity: 0; animation: 14s linear infinite; }
+      .f1 { animation-name: k1; } .f2 { animation-name: k2; } .f3 { animation-name: k3; } .f4 { animation-name: k4; } .f5 { animation-name: k5; }
+      .before { animation-name: before; } .after { animation-name: after; }
+      @keyframes k1 { 0%, 19% { opacity: 1 } 21%, 100% { opacity: 0 } }
+      @keyframes k2 { 0%, 19% { opacity: 0 } 21%, 33% { opacity: 1 } 35%, 100% { opacity: 0 } }
+      @keyframes k3 { 0%, 33% { opacity: 0 } 35%, 54% { opacity: 1 } 56%, 100% { opacity: 0 } }
+      @keyframes k4 { 0%, 54% { opacity: 0 } 56%, 70% { opacity: 1 } 72%, 100% { opacity: 0 } }
+      @keyframes k5 { 0%, 70% { opacity: 0 } 72%, 100% { opacity: 1 } }
+      @keyframes before { 0%, 54% { opacity: 1 } 56%, 100% { opacity: 0 } }
+      @keyframes after { 0%, 54% { opacity: 0 } 56%, 100% { opacity: 1 } }
+      .meter { transform-box: fill-box; transform-origin: left center; animation: meter 14s infinite; }
+      @keyframes meter { 0% { transform: scaleX(0.6) } 14% { transform: scaleX(0.72) } 54% { transform: scaleX(0.72) } 56% { transform: scaleX(0.04) } 100% { transform: scaleX(0.09) } }
+    </style>
+  </defs>
+  <rect width="800" height="450" rx="18" fill="#0d1117"/>
+  <circle cx="26" cy="24" r="6" fill="#ff5f57"/><circle cx="46" cy="24" r="6" fill="#febc2e"/><circle cx="66" cy="24" r="6" fill="#28c840"/>
+  <text x="400" y="30" text-anchor="middle" class="s dim" font-size="15">claude · ~/projects/my-app</text>
+  <line x1="0" y1="46" x2="800" y2="46" stroke="#21262d"/>
+
+  <g class="f before">
+    <text x="28" y="92" class="m fg"><tspan class="acc">❯</tspan> migrate auth middleware to the new API</text>
+    <text x="28" y="132" class="m dim">● Updated session.ts and 14 call sites.</text>
+    <text x="28" y="168" class="m dim">● e2e: 41 passed, 2 failed on the old cookie.</text>
+  </g>
+  <g class="f after">
+    <text x="28" y="92" class="m fg"><tspan class="acc">❯</tspan> /clear</text>
+    <text x="28" y="132" class="m dim"><tspan class="acc">❯</tspan> Resume from my handoff… read the brief</text>
+    <text x="48" y="160" class="s dim" font-size="15">↳ sent by the mod, nothing typed</text>
+  </g>
+  <g class="f f5">
+    <text x="28" y="204" class="m fg">● Read brief.md. Auth migrated, 2 routes</text>
+    <text x="48" y="232" class="m fg">left. 1 open question, 8 pending.</text>
+    <text x="48" y="260" class="m fg">Waiting for you.</text>
+  </g>
+
+  <!-- Band -->
+  <g class="f f1">
+    <text x="28" y="320" class="m warn">Context 72%</text>
+    <rect x="158" y="298" width="112" height="32" rx="7" fill="#d97757"/>
+    <text x="214" y="320" text-anchor="middle" class="m" font-weight="700" fill="#0d1117">Handoff</text>
+    <rect x="282" y="298" width="80" height="32" rx="7" fill="none" stroke="#3d444d"/>
+    <text x="322" y="320" text-anchor="middle" class="m dim">Later</text>
+  </g>
+  <g class="f f2"><text x="28" y="320" class="m dim">Writing handoff…</text></g>
+  <g class="f f3">
+    <text x="28" y="320" class="m ok">Saved · 8 pending</text>
+    <rect x="222" y="298" width="140" height="32" rx="7" fill="#d97757"/>
+    <text x="292" y="320" text-anchor="middle" class="m" font-weight="700" fill="#0d1117">Start fresh</text>
+  </g>
+  <g class="f f4"><text x="28" y="320" class="m dim">Resuming from handoff…</text></g>
+  <g class="f f5"><text x="28" y="320" class="m ok">Resumed from handoff · 8 pending</text></g>
+
+  <line x1="0" y1="350" x2="800" y2="350" stroke="#21262d"/>
+  <text x="28" y="384" class="m acc">❯</text>
+  <line x1="0" y1="404" x2="800" y2="404" stroke="#21262d"/>
+  <text x="28" y="432" class="s dim" font-size="15">context</text>
+  <rect x="92" y="421" width="220" height="12" rx="6" fill="#21262d"/>
+  <rect class="meter" x="92" y="421" width="220" height="12" rx="6" fill="#e3b341"/>
+  <g class="f before"><text x="326" y="432" class="m warn" font-size="15">72%</text></g>
+  <g class="f after"><text x="326" y="432" class="m dim" font-size="15">9%</text></g>
+</svg>

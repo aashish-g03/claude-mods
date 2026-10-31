@@ -1,43 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
   <style>
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .s { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
     .fg { fill: #e6edf3; } .dim { fill: #8b949e; } .bad { fill: #f47067; } .ok { fill: #3fb950; }
   </style>
-  <rect width="1200" height="600" rx="24" fill="#0b0f14"/>
-  <text x="48" y="60" class="sans fg" font-size="30" font-weight="700">Bug 3: the brief arrived 45 ms too late</text>
+  <rect width="800" height="480" rx="18" fill="#0b0f14"/>
+  <text x="28" y="46" class="s fg" font-size="24" font-weight="700">Bug 3: the brief arrived 45 ms late</text>
 
-  <!-- Attempt -->
-  <text x="48" y="124" class="sans bad" font-size="23" font-weight="700">✗ Hidden note added at the start of the turn</text>
-  <line x1="60" y1="190" x2="1140" y2="190" stroke="#30363d" stroke-width="3"/>
-  <g class="sans" font-size="19">
-    <circle cx="90" cy="190" r="10" fill="#79c0ff"/>
-    <text x="90" y="160" text-anchor="middle" class="fg">0 ms</text>
-    <text x="90" y="226" class="fg">You send</text><text x="90" y="250" class="mono dim" font-size="17">"what's pending?"</text>
-    <circle cx="380" cy="190" r="10" fill="#79c0ff"/>
-    <text x="380" y="160" text-anchor="middle" class="fg">0 ms</text>
-    <text x="380" y="226" text-anchor="middle" class="fg">request goes</text><text x="380" y="250" text-anchor="middle" class="fg">to the model</text>
-    <circle cx="640" cy="190" r="12" fill="#f47067"/>
-    <text x="640" y="160" text-anchor="middle" class="bad" font-weight="700">+45 ms</text>
-    <text x="640" y="226" text-anchor="middle" class="bad">brief stored</text><text x="640" y="250" text-anchor="middle" class="bad">(missed the request)</text>
-    <circle cx="960" cy="190" r="10" fill="#8b949e"/>
-    <text x="960" y="226" text-anchor="middle" class="fg">Claude answers about</text><text x="960" y="250" text-anchor="middle" class="fg">a different branch</text>
+  <text x="28" y="96" class="s bad" font-size="19" font-weight="700">✗ Hidden note at the start of the turn</text>
+  <line x1="40" y1="150" x2="760" y2="150" stroke="#30363d" stroke-width="3"/>
+  <g class="s" font-size="16">
+    <circle cx="70" cy="150" r="9" fill="#79c0ff"/>
+    <text x="70" y="128" text-anchor="middle" class="fg">0 ms</text>
+    <text x="70" y="182" text-anchor="middle" class="fg">you ask</text><text x="70" y="202" text-anchor="middle" class="fg">"what's pending?"</text>
+    <circle cx="270" cy="150" r="9" fill="#79c0ff"/>
+    <text x="270" y="128" text-anchor="middle" class="fg">0 ms</text>
+    <text x="270" y="182" text-anchor="middle" class="fg">request sent</text><text x="270" y="202" text-anchor="middle" class="fg">to the model</text>
+    <circle cx="470" cy="150" r="11" fill="#f47067"/>
+    <text x="470" y="128" text-anchor="middle" class="bad" font-weight="700">+45 ms</text>
+    <text x="470" y="182" text-anchor="middle" class="bad">brief stored,</text><text x="470" y="202" text-anchor="middle" class="bad">too late</text>
+    <circle cx="680" cy="150" r="9" fill="#8b949e"/>
+    <text x="680" y="182" text-anchor="middle" class="fg">answer about</text><text x="680" y="202" text-anchor="middle" class="fg">the wrong branch</text>
   </g>
 
-  <!-- Fix -->
-  <text x="48" y="352" class="sans ok" font-size="23" font-weight="700">✓ Fix: the mod sends a real prompt</text>
-  <line x1="60" y1="418" x2="1140" y2="418" stroke="#30363d" stroke-width="3"/>
-  <g class="sans" font-size="19">
-    <circle cx="90" cy="418" r="10" fill="#79c0ff"/>
-    <text x="90" y="388" text-anchor="middle" class="fg">0 s</text>
-    <text x="90" y="454" class="mono fg">/clear</text>
-    <circle cx="380" cy="418" r="12" fill="#3fb950"/>
-    <text x="380" y="388" text-anchor="middle" class="ok" font-weight="700">+0.6 s</text>
-    <text x="380" y="454" text-anchor="middle" class="fg">mod sends "Resume from</text><text x="380" y="478" text-anchor="middle" class="fg">my handoff… read brief.md"</text>
-    <circle cx="660" cy="418" r="10" fill="#79c0ff"/>
-    <text x="660" y="454" text-anchor="middle" class="fg">Claude reads</text><text x="660" y="478" text-anchor="middle" class="mono fg" font-size="17">brief.md</text>
-    <circle cx="960" cy="418" r="10" fill="#3fb950"/>
-    <text x="960" y="454" text-anchor="middle" class="fg">lists 7 pending items,</text><text x="960" y="478" text-anchor="middle" class="fg">waits for you</text>
+  <text x="28" y="282" class="s ok" font-size="19" font-weight="700">✓ Fix: the mod sends a real prompt</text>
+  <line x1="40" y1="336" x2="760" y2="336" stroke="#30363d" stroke-width="3"/>
+  <g class="s" font-size="16">
+    <circle cx="70" cy="336" r="9" fill="#79c0ff"/>
+    <text x="70" y="314" text-anchor="middle" class="fg">0 s</text>
+    <text x="70" y="368" text-anchor="middle" class="m fg" font-size="16">/clear</text>
+    <circle cx="270" cy="336" r="11" fill="#3fb950"/>
+    <text x="270" y="314" text-anchor="middle" class="ok" font-weight="700">+0.6 s</text>
+    <text x="270" y="368" text-anchor="middle" class="fg">"Resume from my</text><text x="270" y="388" text-anchor="middle" class="fg">handoff…" is sent</text>
+    <circle cx="470" cy="336" r="9" fill="#79c0ff"/>
+    <text x="470" y="368" text-anchor="middle" class="fg">Claude reads</text><text x="470" y="388" text-anchor="middle" class="m fg" font-size="16">brief.md</text>
+    <circle cx="680" cy="336" r="9" fill="#3fb950"/>
+    <text x="680" y="368" text-anchor="middle" class="fg">7 pending listed,</text><text x="680" y="388" text-anchor="middle" class="fg">waits for you</text>
   </g>
-  <text x="48" y="552" class="sans dim" font-size="19">Nothing typed between /clear and the resume prompt. Reading a file doesn't depend on timing.</text>
+  <text x="28" y="446" class="s dim" font-size="16">Reading a file doesn't depend on timing.</text>
 </svg>
