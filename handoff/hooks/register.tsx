@@ -7,8 +7,8 @@ import type { Band } from '../types'
 const THRESHOLD = 70
 // A handoff older than this asks before it loads.
 const FRESH_MS = 48 * 60 * 60 * 1000
-// Lets a /clear finish before the resume prompt is queued.
-const RESUME_DELAY_MS = 500
+// Long enough to read the band and press Skip; the prompt then waits for the session to be idle.
+const RESUME_DELAY_MS = 4000
 
 // Change the tag when Band's fields change: it declines what an earlier
 // version stored, which outlives a reload.

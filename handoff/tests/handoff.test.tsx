@@ -87,13 +87,13 @@ test('after /clear the next conversation starts by itself with the brief, once',
   expect(resumes(prompts)).toHaveLength(0)
 
   await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
-  await clock.advance(1_000)
+  await clock.advance(5_000)
   expect(resumes(prompts)).toHaveLength(1)
   expect(prompts[0]).toContain('/h/brief.md')
 
   // Clearing the resumed conversation does not start it again.
   await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
-  await clock.advance(1_000)
+  await clock.advance(5_000)
   expect(resumes(prompts)).toHaveLength(1)
 })
 
@@ -104,7 +104,7 @@ test('Skip before the resume fires keeps it from starting', async ($, on) => {
   await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
 
   await $.command.run({ ...RUN, command: 'handoff-skip' })
-  await clock.advance(1_000)
+  await clock.advance(5_000)
   expect(resumes(prompts)).toHaveLength(0)
 })
 
@@ -114,7 +114,7 @@ test('a handoff older than two days waits for Load', async ($, on) => {
   const clock = mock.clock(on, { now: NOW })
   await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
 
-  await clock.advance(1_000)
+  await clock.advance(5_000)
   expect(resumes(prompts)).toHaveLength(0)
 
   const ui = await $.ui.mount(BAND)
@@ -131,7 +131,7 @@ test('a refused resume prompt shows where the brief is', async ($, on) => {
     throw new Error('policy')
   })
   await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
-  await clock.advance(1_000)
+  await clock.advance(5_000)
 
   const ui = await $.ui.mount(BAND)
   expect((await ui.find({ type: 'Text', text: /could not resume/ }))?.text).toContain('/h/brief.md')

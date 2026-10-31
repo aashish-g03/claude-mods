@@ -1,5 +1,12 @@
 {
   "name": "aashish-mods",
-  "owner": { "name": "aashish-g03" },
-  "plugins": [{ "name": "handoff", "source": "./handoff", "description": "At 70% context, one button saves a structured handoff and the next session resumes from it" }]
+  "description": "Claude Code mods by aashish-g03",
+  "owner": { "name": "aashish-g03", "url": "https://github.com/aashish-g03" },
+  "plugins": [
+    {
+      "name": "handoff",
+      "source": "./handoff",
+      "description": "At 70% context, one button saves a structured brief and the next session resumes from it by itself"
+    }
+  ]
 }

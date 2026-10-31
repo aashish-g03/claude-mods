@@ -1,6 +1,22 @@
 {
   "name": "handoff",
-  "version": "0.1.0",
-  "description": "At 70% context, one button saves a structured handoff and the next session picks it up",
+  "displayName": "Handoff",
+  "version": "0.2.0",
+  "description": "At 70% context, one button saves a structured brief and the full transcript, and the next session resumes from it by itself",
+  "author": {
+    "name": "aashish-g03",
+    "url": "https://github.com/aashish-g03"
+  },
+  "homepage": "https://github.com/aashish-g03/claude-mods#readme",
+  "repository": "https://github.com/aashish-g03/claude-mods",
+  "license": "MIT",
+  "keywords": [
+    "context",
+    "handoff",
+    "session",
+    "resume",
+    "clear"
+  ],
+  "icon": "./.claude-plugin/icon.png",
   "types": "./types/index.d.ts"
 }
