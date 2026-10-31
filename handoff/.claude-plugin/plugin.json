@@ -1,0 +1,6 @@
+{
+  "name": "handoff",
+  "version": "0.1.0",
+  "description": "At 70% context, one button saves a structured handoff and the next session picks it up",
+  "types": "./types/index.d.ts"
+}
