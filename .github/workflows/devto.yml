@@ -1,0 +1,57 @@
+name: Publish to dev.to
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'articles/**.md'
+      - 'assets/**'
+      - 'scripts/publish-devto.mjs'
+  pull_request:
+    paths:
+      - 'articles/**.md'
+      - 'scripts/publish-devto.mjs'
+  workflow_dispatch:
+
+# One run at a time, so two pushes can't both create the same article.
+concurrency:
+  group: devto
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check articles (pull requests)
+        if: github.event_name == 'pull_request'
+        run: node scripts/publish-devto.mjs --dry-run
+
+      - name: Skip without an API key
+        if: github.event_name != 'pull_request' && env.DEVTO_API_KEY == ''
+        run: echo "::warning::DEVTO_API_KEY secret is not set, so nothing was published. Add it under Settings, Secrets and variables, Actions."
+
+      - name: Publish or update
+        if: github.event_name != 'pull_request' && env.DEVTO_API_KEY != ''
+        run: node scripts/publish-devto.mjs
+
+      # Keeps each article's dev.to id, so the next push updates instead of duplicating.
+      - name: Save article ids
+        if: github.event_name != 'pull_request' && env.DEVTO_API_KEY != ''
+        run: |
+          if [ -n "$(git status --porcelain articles/.devto.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add articles/.devto.json
+            git commit -m "chore: record dev.to article ids"
+            git push
+          fi
