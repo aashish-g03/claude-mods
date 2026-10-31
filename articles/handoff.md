@@ -1,127 +1,137 @@
 ---
 title: I stopped re-explaining my work to Claude Code every time the context filled up
 published: false
-description: A Claude Code mod that adds one button at 70% context. It saves a structured brief, clears, and the next conversation resumes from it without you typing a word.
+description: A Claude Code mod that adds one button at 70% context. It saves a 16 KB brief instead of a 212 KB transcript, clears, and the next conversation resumes from it without you typing a word.
 tags: claude, ai, productivity, opensource
 cover_image: ../assets/devto-cover.png
 ---
 
-I have a ritual. Every time a Claude Code conversation reaches 75–80% of its context, I run `/export`, open a new session, and paste something like this:
+> **TL;DR:** **handoff** is a Claude Code mod. When a conversation passes **70%** of its context, a **Handoff** button appears above the prompt. One press saves the full transcript (**212 KB** on my last run) and has Claude write a **16 KB brief**: the task, every open question, a pending checklist, decisions and gotchas. Press **Start fresh**, and **0.6 s** after `/clear` the new conversation resumes from the brief by itself, with nothing typed. It does **not** carry handoffs between machines, and I've only tested it in a macOS terminal.
+>
+> [Code](https://github.com/aashish-g03/claude-mods) | [Install](#try-it) | Built on Claude Code mods (early access)
 
-> I was working on this project in another session but I'm moving to a new one. Continue from where I left off. Answer every question we discussed in the last session. Check skills and other things so we can start. Tell me what's still pending.
+![The handoff band: the context reaches 72% and a Handoff button appears; after pressing it the band reads Handoff saved, 8 pending; /clear runs; the next conversation is sent a resume prompt automatically and Claude reports where things stand](../assets/handoff-demo.gif)
 
-Then I paste the path to a 300 KB export and wait while the new session reads it, hoping it picks up the parts that matter.
+---
 
-It works, mostly. It's also the same five steps every single time, so I turned it into one button.
+## "Continue from where I left off"
 
-![The handoff band: at 72% a Handoff button appears, the handoff is saved, /clear runs, and the next conversation resumes by itself](../assets/handoff-demo.gif)
+Every time a Claude Code conversation hit 75–80% of its context, I did the same five things:
 
-## What it does
+![The old ritual in five steps: notice the context is at 78%, run /export, open a new session that knows nothing, paste a long "continue from where I left off, answer every question, tell me what's pending" prompt, then wait while it reads a 300 KB export and guesses which parts mattered](../assets/handoff-article/ritual.gif)
 
-**handoff** is a [Claude Code mod](https://github.com/anthropics/claude-code/tree/main/mods). When the context passes 70%, a band appears above the prompt:
+The prompt I pasted was always some version of:
 
-```
-Context 72%  [ Handoff ]  [ Later ]
-```
+> I was working on this project in another session but I'm moving to a new one. Continue from where I left off. Answer every question we discussed. Check skills and other things so we can start. Tell me what's still pending.
 
-Press **Handoff** and it:
+It mostly worked. But a raw export tells the next session *what was said*, not *what mattered*, so it re-read everything and guessed. And it was the same five steps, every time.
 
-1. Saves the full transcript, tool output included, to `~/.claude/handoffs/<project>/<timestamp>/transcript.md`.
-2. Asks Claude to write a **brief** over the conversation it's leaving.
-3. Shows `Handoff saved · 8 pending  [ Start fresh ]`.
+## What I built
 
-Press **Start fresh** (or type `/clear`). A few seconds later the new conversation starts by itself with a prompt telling Claude to read the brief first, load the skills and memories it lists, summarise where things stand, and wait for you.
+A band that sits above the prompt and walks through the handoff:
 
-The brief is the part I care about. A raw transcript tells the next session *what was said*. The brief tells it what matters:
+| You see | What it means |
+|---|---|
+| `Context 72%` **`Handoff`** `Later` | Past the threshold. **Later** waits another 5 points. |
+| `Handoff saved · 8 pending` **`Start fresh`** | Both files are on disk. **Start fresh** runs `/clear`. |
+| `Resuming from handoff…` **`Skip`** | The cleared conversation resumes in a few seconds. |
+| `Resumed from handoff · 8 pending` | Claude is reading the brief. |
 
-- **Task in progress**: how far it got and the very next step
-- **Every question raised**, each one answered or marked OPEN
-- **Pending**: a `- [ ]` checklist, most important first
-- **Decisions**, including approaches tried and rejected
-- **Files and state**: paths, branches, uncommitted work
-- **Gotchas**: what went wrong, and the corrections I made along the way
-- **Skills and memories** to load
+The brief is the point. Claude writes it over the conversation it's leaving, so it knows what was decided, what was rejected and what I corrected along the way:
 
-On the run that worked end to end, the transcript was 212 KB and the brief was 16 KB, about 4,000 tokens. The new session read the brief, listed the open questions and the 7 pending items correctly, and waited for me.
+![A brief.md filling in section by section: Task in progress, Questions raised and their status (one OPEN, one answered), Pending checklist, Decisions, Gotchas, and Skills and memories. Beside it, a bar shrinks from the 212 KB transcript to the 16 KB brief, about 4,000 tokens](../assets/handoff-article/brief.gif)
+
+On the run that worked end to end, the new session read the brief, listed the open questions and all 7 pending items correctly, and waited for me before touching anything. The full transcript stays on disk next to the brief, for the rare detail the brief leaves out.
 
 ## What a mod is
 
-Mods are an early-access way to change Claude Code itself. A mod is a TypeScript module that registers hooks on engine events:
+Mods are an early-access way to change Claude Code itself. A mod is a TypeScript module that hooks engine events:
 
 ```ts
 export const register: Register = on => {
+  // After every turn: how full is the context?
   on('session.measure', async ($, e, next) => {
-    // e.context.percent is the context fill after each turn
+    // e.context.percent → show the band at 70%
     return next(e)
   })
 
+  // Draw the band above the prompt, or nothing.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const { Box, Button, Text } = $.ui.resolve(e)
-    // draw the band, or call next(e) to draw nothing
+    // …
   })
 }
 ```
 
-`$` is the engine: `$.session`, `$.model`, `$.fs`, `$.store`, `$.ui` and so on. `next(e)` passes the event to whatever comes after you. That's enough to build a band with buttons, a slash command, and a background timer.
+`$` is the engine (`$.session`, `$.model`, `$.fs`, `$.store`, `$.ui`…), and `next(e)` hands the event to whatever comes after you. That's enough for a band with buttons, two slash commands and a timer.
 
-## Four things that broke along the way
+## What didn't work
 
-The first version worked in its tests and failed in real use in four different ways. These were the most useful parts of building it.
+The first version passed its tests and then failed in real use four different ways. These were the most useful part of building it.
 
 ### 1. The button would never have appeared
 
-I worked out the threshold from the auto-compact setting, so the button would show before compaction ran. I divided the compaction threshold by the *compaction window*. But the fill percentage Claude Code reports is over the *model's* window, and on some setups those differ. On a 1M-token model with a 200k compaction window, compaction fires at 16% of the model's window, while my maths put the button at 70%. The button would never have shown up.
+The button is meant to come up before auto-compact runs. I worked out the auto-compact point over the *compaction* window, but the fill Claude Code reports is over the *model's* window. When those differ, it breaks:
 
-The fix was one denominator. The test for it now uses exactly that setup.
+![Two context bars on a 1M-token model with a 200k compaction window. First version: auto-compact really happens at 16%, but the button waits at 70%, so the conversation is compacted and no button ever appears. Fixed: the button appears at 11%, five points before compaction at 16%](../assets/handoff-article/threshold.gif)
 
-### 2. A policy plugin skipped my hook
+The fix was one denominator. The test for it uses exactly that setup.
 
-My first design put the brief into the next conversation's system prompt with a `prompt.compose` hook. The first live load printed this:
+### 2. A security plugin skipped my hook
+
+My first design slipped the brief into the next conversation's system prompt with a `prompt.compose` hook. The first live load printed:
 
 ```
 handoff: its prompt.compose hook was skipped. "cc-plugin-sec-default" runs first and sent the event on past it.
 ```
 
-A security plugin loaded ahead of mine sends prompt-shaping events past personal mods. Fair enough, and yours may well do the same, so a mod shouldn't depend on those events.
+A security plugin loaded ahead of mine sends prompt-shaping events past personal mods. Fair enough, and yours may well do the same, so don't build on those events.
 
 ### 3. The brief arrived 45 ms too late
 
-So I switched to adding the brief as a hidden message at the start of the turn. The band said **Resumed from handoff**. Then I asked "what's pending?" and Claude answered about a completely different branch.
+Next I added the brief as a hidden note at the start of the turn. The band said **Resumed**, so I asked "what's pending?", and Claude answered about a completely different branch. The session log showed why:
 
-The transcript showed why: the hidden message was stored **45 ms after** my first prompt, after the request had already gone out. And because the brief only loaded on my first message, I still had to type something to get going.
+![Two timelines. Hidden note: you send "what's pending?" at 0 ms, the request goes to the model at 0 ms, the brief is stored at +45 ms and misses the request, and Claude answers about a different branch. Fix: /clear at 0 s, the mod sends a resume prompt at +0.6 s, Claude reads brief.md, lists 7 pending items and waits](../assets/handoff-article/race.png)
 
-### 4. The fix: just send a real prompt
+### 4. The fix was the simplest version
 
-The version that works is the simplest. After `/clear`, the mod sends a normal prompt, as if I'd typed it: *"Resume from my handoff… Read the brief at `<path>` first."* Claude reads the brief file itself, which doesn't depend on timing. It doesn't need any special access either. In the session log, the prompt arrived 0.6 s after `/clear`, with nothing typed in between.
+After `/clear`, the mod just sends a normal prompt, as if I'd typed it: *"Resume from my handoff… Read the brief at `<path>` first."* Claude reads the file itself, which doesn't depend on timing or need any special access.
 
-There was one more catch. I had set that delay to 500 ms, so the **Skip** button on the "Resuming…" band was impossible to press. It's 4 seconds now. The prompt waits until the session is idle anyway, so the longer delay never interrupts anything.
+One last catch: I'd set that delay to 500 ms, which made the **Skip** button impossible to press. It's 4 seconds now. The prompt waits until the session is idle anyway, so it never interrupts you.
 
 ## Tests that catch real bugs
 
-Halfway through I read [Ray Fernando's post](https://x.com/RayFernando1337/status/2103279689615958062) about deleting 60,984 lines of "test slop". The idea: unit tests written after the code restate the code, always pass, and catch nothing.
+Halfway through I read [Ray Fernando's post](https://x.com/RayFernando1337/status/2103279689615958062) about deleting 60,984 lines of "test slop": unit tests written after the code restate the code and catch nothing. I had 13 tests and deleted the 2 that only restated the implementation.
 
-I had 13 tests. Two of them, "the button appears at 72%" and "/handoff writes two files", only restated the implementation, so I deleted them. The 9 that remain each pin a way the mod has actually failed or could fail: the compaction-window maths, a brief that fails, a file write that throws, resuming exactly once after `/clear`, Skip, stale handoffs, and a refused resume prompt. The real checks were the live runs.
+The 9 left each pin a way the mod has actually failed or could fail:
+- a compaction window smaller than the model's window
+- a brief that fails, and a file write that throws
+- resuming exactly once after `/clear`
+- **Skip**, stale handoffs, and a refused resume prompt
+
+The real checks were the live runs.
 
 ## What it touches
 
-Mods run with Claude Code's own permissions and aren't sandboxed, so here's everything this one reaches:
+Mods run with Claude Code's own permissions and aren't sandboxed. This one:
 
-- Reads the current conversation (`$.session.messages`)
-- Asks Claude for the brief over the cached conversation (`$.model.fork`), billed like any turn
-- Writes two files under `~/.claude/handoffs/`, never inside your repos
-- Remembers which handoff is waiting, per folder (`$.store`)
-- Sends the resume prompt and runs `/clear` when you press the button
+- reads the current conversation and asks Claude for the brief (billed like any turn)
+- writes two files under `~/.claude/handoffs/`, never inside your repos
+- remembers, per folder, which handoff is waiting
+- sends the resume prompt and runs `/clear` when you press the button
 
-It makes no network calls of its own and starts no processes. It's one file, about 300 lines. [Read it](https://github.com/aashish-g03/claude-mods/blob/main/handoff/hooks/register.tsx) before you install it.
+It makes no network calls of its own and starts no processes. It's [one file, about 300 lines](https://github.com/aashish-g03/claude-mods/blob/main/handoff/hooks/register.tsx), so read it before you install it.
 
 ## Try it
 
-At a Claude Code prompt:
+- **Install:** at a Claude Code prompt, run `/plugin install handoff --marketplace aashish-g03/claude-mods`, then pick the **user** scope so it runs in every project.
+- **Use:** keep working until the band appears at 70%, press **Handoff**, then **Start fresh**. You can also type `/handoff`, and `/handoff-skip` starts clean.
+- **Read the code:** [github.com/aashish-g03/claude-mods](https://github.com/aashish-g03/claude-mods), with the tests and a full README.
 
-```
-/plugin install handoff --marketplace aashish-g03/claude-mods
-```
-
-Pick the **user** scope so it runs in every project. The code, tests and a full README are at [github.com/aashish-g03/claude-mods](https://github.com/aashish-g03/claude-mods).
+Next, I want to check that the new-window path resumes as reliably as `/clear` does, and to try a pending pane that lets you tick items off while you work.
 
 If you have your own ritual for running out of context, I'd like to hear it in the comments.
+
+## AI disclosure
+
+I built this with Claude Code as a coding assistant, and Claude helped draft this post and make its diagrams. The design decisions, the bugs and the fixes described here are mine to explain and defend.

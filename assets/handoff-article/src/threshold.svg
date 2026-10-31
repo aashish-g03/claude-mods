@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .fg { fill: #e6edf3; } .dim { fill: #8b949e; } .bad { fill: #f47067; } .ok { fill: #3fb950; } .acc { fill: #f0a46f; }
+      .fill { transform-box: fill-box; transform-origin: left center; animation: fill 10s linear infinite; }
+      @keyframes fill { 0% { transform: scaleX(0) } 45% { transform: scaleX(0.16) } 47% { transform: scaleX(0.05) } 100% { transform: scaleX(0.12) } }
+      .flash { opacity: 0; animation: flash 10s linear infinite; }
+      @keyframes flash { 0%, 44% { opacity: 0 } 46%, 100% { opacity: 1 } }
+      .band { opacity: 0; animation: band 10s linear infinite; }
+      @keyframes band { 0%, 31% { opacity: 0 } 33%, 100% { opacity: 1 } }
+    </style>
+  </defs>
+  <rect width="1200" height="560" rx="24" fill="#0b0f14"/>
+  <text x="48" y="60" class="sans fg" font-size="30" font-weight="700">Bug 1: the button would never have appeared</text>
+  <text x="48" y="96" class="sans dim" font-size="21">Example: a 1M-token model with a 200k compaction window (auto-compact at 160k = 16% of the model's window)</text>
+
+  <!-- Row A -->
+  <text x="48" y="170" class="sans bad" font-size="24" font-weight="700">✗ First version</text>
+  <text x="48" y="200" class="sans dim" font-size="19">read auto-compact as 80% (160k of 200k), so the button stayed at 70%</text>
+  <rect x="48" y="222" width="1000" height="34" rx="8" fill="#21262d"/>
+  <rect class="fill" x="48" y="222" width="1000" height="34" rx="8" fill="#e3b341"/>
+  <line x1="208" y1="212" x2="208" y2="268" stroke="#f47067" stroke-width="3"/>
+  <text x="208" y="292" text-anchor="middle" class="mono bad" font-size="18">auto-compact 16%</text>
+  <line x1="748" y1="212" x2="748" y2="268" stroke="#8b949e" stroke-width="3" stroke-dasharray="6 5"/>
+  <text x="748" y="292" text-anchor="middle" class="mono dim" font-size="18">button 70%</text>
+  <g class="flash"><text x="1064" y="246" class="sans bad" font-size="20" font-weight="700">compacted.</text>
+    <text x="1064" y="272" class="sans bad" font-size="20">no button</text></g>
+
+  <!-- Row B -->
+  <text x="48" y="370" class="sans ok" font-size="24" font-weight="700">✓ Fixed</text>
+  <text x="48" y="400" class="sans dim" font-size="19">both sides over the model's window; button 5 points before compaction</text>
+  <rect x="48" y="422" width="1000" height="34" rx="8" fill="#21262d"/>
+  <rect class="fill" x="48" y="422" width="1000" height="34" rx="8" fill="#e3b341"/>
+  <line x1="158" y1="412" x2="158" y2="468" stroke="#3fb950" stroke-width="3"/>
+  <text x="158" y="492" text-anchor="middle" class="mono ok" font-size="18">button 11%</text>
+  <line x1="208" y1="412" x2="208" y2="468" stroke="#f47067" stroke-width="3"/>
+  <text x="240" y="492" class="mono bad" font-size="18">16%</text>
+  <g class="band">
+    <rect x="560" y="478" width="420" height="44" rx="8" fill="#0d1117" stroke="#30363d"/>
+    <text x="580" y="507" class="mono" font-size="20" fill="#e3b341">Context 11%</text>
+    <rect x="732" y="487" width="110" height="28" rx="6" fill="#d97757"/>
+    <text x="787" y="507" text-anchor="middle" class="mono" font-size="18" font-weight="700" fill="#0d1117">Handoff</text>
+  </g>
+</svg>
