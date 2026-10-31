@@ -39,7 +39,7 @@ A band that sits above the prompt and walks through the handoff:
 
 The brief is the point. Claude writes it over the conversation it's leaving, so it knows what was decided, what was rejected and what I corrected along the way:
 
-![A brief.md filling in section by section: Task in progress, Questions raised and their status (one OPEN, one answered), Pending checklist, Decisions, Gotchas, and Skills and memories. Beside it, a bar shrinks from the 212 KB transcript to the 16 KB brief, about 4,000 tokens](../assets/handoff-article/brief.gif)
+![A brief.md filling in section by section: Task in progress, Questions raised and their status (one OPEN, one answered), Pending checklist, Decisions, Gotchas, and Skills and memories. Beside it, a bar shrinks from the 212 KB transcript to the 16 KB brief, about 4,000 tokens](../assets/handoff-article/brief-filling.gif)
 
 On the run that worked end to end, the new session read the brief, listed the open questions and all 7 pending items correctly, and waited for me before touching anything. The full transcript stays on disk next to the brief, for the rare detail the brief leaves out.
 
