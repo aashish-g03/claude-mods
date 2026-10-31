@@ -68,7 +68,7 @@ function toArticle(file) {
     body_markdown: withAbsoluteImages(body).trim() + '\n',
     published: meta.published === 'true',
     description: meta.description,
-    tags: tags.join(','),
+    tags,
     main_image: meta.cover_image ? absolute(meta.cover_image) : null,
     canonical_url: meta.canonical_url || null,
     series: meta.series || null,
