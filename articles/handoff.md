@@ -1,6 +1,6 @@
 ---
 title: I stopped re-explaining my work to Claude Code every time the context filled up
-published: false
+published: true
 description: A Claude Code mod that adds one button at 70% context. It saves a 16 KB brief instead of a 212 KB transcript, clears, and the next conversation resumes from it without you typing a word.
 tags: claude, ai, productivity, opensource
 cover_image: ../assets/devto-cover.png
